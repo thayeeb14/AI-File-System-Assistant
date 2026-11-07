@@ -1,0 +1,41 @@
+# Java
+*.class
+*.jar
+*.war
+
+# Maven
+target/
+
+# Gradle
+build/
+.gradle/
+
+# IntelliJ
+.idea/
+*.iml
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Java build files
+**/target/
+
+# IntelliJ
+.idea/
+**/.idea/
+*.iml
+
+# Secrets
+.env
+.env.*
+!.env.example
+application-local.properties

@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI File System Assistant</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --card: rgba(255,255,255,.88);
+            --text: #172033;
+            --muted: #64748b;
+            --line: #e2e8f0;
+            --input: #f8fafc;
+            --answer: #f1f3ff;
+            --purple: #7657f6;
+        }
+
+        body {
+            min-height: 100vh;
+            padding: 34px 18px;
+            display: grid;
+            place-items: center;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: var(--text);
+
+            background:
+                    radial-gradient(circle at 12% 8%, #d8d1ff 0, transparent 30%),
+                    radial-gradient(circle at 90% 15%, #c7e5ff 0, transparent 28%),
+                    linear-gradient(135deg, #f5f3ff, #eff6ff 55%, #fdf2f8);
+        }
+
+        /* DARK THEME */
+
+        body.dark {
+            --card: rgba(20,29,49,.94);
+            --text: #f1f5f9;
+            --muted: #a6b2c7;
+            --line: #34415c;
+            --input: #111b30;
+            --answer: #171d39;
+
+            background:
+                    radial-gradient(circle at 12% 8%, #30245e 0, transparent 30%),
+                    radial-gradient(circle at 90% 15%, #15365a 0, transparent 28%),
+                    #0b1220;
+        }
+
+        .page {
+            width: min(820px, 100%);
+        }
+
+        /* TOP BAR */
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .brand {
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .theme-btn {
+            border: 1px solid var(--line);
+            background: var(--card);
+            color: var(--text);
+            border-radius: 999px;
+            padding: 9px 14px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        /* MAIN CARD */
+
+        .panel {
+            background: var(--card);
+            border: 1px solid rgba(255,255,255,.65);
+            border-radius: 26px;
+            padding: clamp(24px, 5vw, 48px);
+            box-shadow: 0 24px 70px rgba(35,43,90,.13);
+            backdrop-filter: blur(18px);
+        }
+
+        /* HEADER */
+
+        .hero {
+            text-align: center;
+            margin-bottom: 34px;
+        }
+
+        .logo {
+            width: 76px;
+            height: 76px;
+            margin: 0 auto 18px;
+            display: grid;
+            place-items: center;
+            border-radius: 23px;
+            color: white;
+            font-size: 34px;
+
+            background: linear-gradient(
+                    135deg,
+                    #2563eb,
+                    #9333ea
+            );
+
+            box-shadow: 0 12px 30px rgba(99,102,241,.3);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 13px;
+            border-radius: 999px;
+            background: rgba(118,87,246,.11);
+            color: var(--purple);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .1em;
+            margin-bottom: 16px;
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #10b981;
+        }
+
+        h1 {
+            font-size: clamp(28px, 5vw, 40px);
+            line-height: 1.15;
+            letter-spacing: -1.4px;
+            margin-bottom: 13px;
+        }
+
+        .gradient {
+            background: linear-gradient(
+                    90deg,
+                    #4f46e5,
+                    #a855f7
+            );
+
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .subtitle {
+            max-width: 570px;
+            margin: auto;
+            color: var(--muted);
+            font-size: 15px;
+            line-height: 1.8;
+        }
+
+        .author {
+            margin-top: 15px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .author strong {
+            color: var(--text);
+        }
+
+        /* PROMPT FORM */
+
+        label {
+            display: block;
+            margin-bottom: 11px;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 145px;
+            resize: vertical;
+            padding: 18px;
+
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            outline: none;
+
+            background: var(--input);
+            color: var(--text);
+
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        textarea:focus {
+            border-color: #8b7cf6;
+            box-shadow: 0 0 0 4px rgba(118,87,246,.12);
+        }
+
+        .hint {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 9px;
+        }
+
+        /* SUBMIT BUTTON */
+
+        .submit {
+            width: 100%;
+            margin-top: 18px;
+            border: 0;
+            border-radius: 14px;
+            padding: 16px 20px;
+
+            color: white;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+
+            background: linear-gradient(
+                    105deg,
+                    #2563eb,
+                    #6366f1,
+                    #9333ea
+            );
+
+            box-shadow: 0 9px 24px rgba(99,102,241,.25);
+            transition: .2s;
+        }
+
+        .submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 13px 28px rgba(99,102,241,.35);
+        }
+
+        /* RESPONSE SECTION */
+
+        .response-section {
+            margin-top: 32px;
+        }
+
+        .response-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .response-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            font-weight: 800;
+        }
+
+        .response-icon {
+            width: 34px;
+            height: 34px;
+            display: grid;
+            place-items: center;
+            border-radius: 11px;
+
+            background: linear-gradient(
+                    135deg,
+                    #6366f1,
+                    #a855f7
+            );
+
+            color: white;
+        }
+
+        .status {
+            color: #059669;
+            background: rgba(16,185,129,.1);
+            padding: 7px 11px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .answer {
+            min-height: 112px;
+            padding: 20px;
+            border: 1px solid rgba(118,87,246,.18);
+            border-radius: 16px;
+
+            background: var(--answer);
+            color: var(--text);
+
+            font-size: 14px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .welcome {
+            color: var(--muted);
+        }
+
+        /* FOOTER */
+
+        .footer {
+            margin-top: 26px;
+            padding-top: 19px;
+            border-top: 1px solid var(--line);
+
+            text-align: center;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.8;
+        }
+
+        .footer strong {
+            color: var(--purple);
+        }
+
+        /* RESPONSIVE */
+
+        @media(max-width: 540px) {
+            body {
+                padding: 18px 12px;
+            }
+
+            .panel {
+                border-radius: 21px;
+            }
+
+            .topbar {
+                align-items: flex-start;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="page">
+
+    <!-- TOP BAR -->
+
+    <div class="topbar">
+
+        <div class="brand">
+            AI-powered productivity
+        </div>
+
+        <button
+                class="theme-btn"
+                type="button"
+                onclick="document.body.classList.toggle('dark')">
+
+            ☾ Toggle theme
+
+        </button>
+
+    </div>
+
+    <!-- MAIN CONTAINER -->
+
+    <main class="panel">
+
+        <!-- HEADER -->
+
+        <header class="hero">
+
+            <div class="logo">
+                📁
+            </div>
+
+            <div class="eyebrow">
+                <span class="dot"></span>
+                MCP POWERED AI
+            </div>
+
+            <h1>
+                AI File System
+                <span class="gradient">Assistant</span>
+            </h1>
+
+            <p class="subtitle">
+
+                Manage files and folders using natural language.
+                Ask the AI assistant to explore your sandbox,
+                create folders, or move files through MCP tools.
+
+            </p>
+
+            <p class="author">
+                Developed by
+                <strong>MAHAMMED ABDUL THAYEEB</strong>
+            </p>
+
+        </header>
+
+        <!-- PROMPT FORM -->
+
+        <form th:action="@{/ai/chat}" method="post">
+
+            <label for="prompt">
+                ✨ Enter your prompt
+            </label>
+
+            <textarea
+                    id="prompt"
+                    name="prompt"
+                    placeholder="For example: List all files in my sandbox folder"
+                    th:text="${prompt}">
+            </textarea>
+
+            <p class="hint">
+                Try: "Create a folder named Documents"
+                or "Move notes.txt to Documents/notes.txt".
+            </p>
+
+            <button class="submit" type="submit">
+                Send to AI Assistant →
+            </button>
+
+        </form>
+
+        <!-- AI RESPONSE -->
+
+        <section class="response-section">
+
+            <div class="response-head">
+
+                <div class="response-title">
+
+                    <span class="response-icon">
+                        ✦
+                    </span>
+
+                    AI Response
+
+                </div>
+
+                <span class="status">
+                    ● Assistant
+                </span>
+
+            </div>
+
+            <div class="answer">
+
+                <p
+                        class="welcome"
+                        th:if="${response == null}">
+
+                    👋 Welcome! Your AI response will appear here.
+
+                    Enter a prompt above to get started.
+
+                </p>
+
+                <p
+                        th:if="${response != null}"
+                        th:text="${response}">
+                </p>
+
+            </div>
+
+        </section>
+
+        <!-- FOOTER -->
+
+        <footer class="footer">
+
+            Built with
+            <strong>
+                Java · Spring Boot · Spring AI · MCP
+            </strong>
+
+            <br>
+
+            © 2026 MAHAMMED ABDUL THAYEEB
+
+        </footer>
+
+    </main>
+
+</div>
+
+</body>
+</html>
